@@ -1,48 +1,33 @@
 """
-Database Schemas
+Database Schemas for Screen Demon
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model maps to a MongoDB collection (lowercased class name).
+- User -> user
+- Challenge -> challenge
+- ScreenTimeLog -> screentimelog
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
-
-# Example schemas (replace with your own):
+from pydantic import BaseModel, Field, EmailStr
+from typing import List, Optional
+from datetime import date as DateType
 
 class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
+    handle: str = Field(..., description="Unique display handle, e.g., @alex")
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: Optional[EmailStr] = Field(None, description="Email address")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Challenge(BaseModel):
+    title: str = Field(..., description="Challenge title")
+    creator_id: str = Field(..., description="User id of challenge creator")
+    start_date: DateType = Field(..., description="Start date (YYYY-MM-DD)")
+    end_date: DateType = Field(..., description="End date (YYYY-MM-DD)")
+    bet_type: str = Field(..., description="What you’re betting on: food, activity, etc.")
+    bet_details: Optional[str] = Field(None, description="Details of the bet (e.g., loser buys pizza)")
+    participants: List[str] = Field(default_factory=list, description="User ids of participants")
+    status: str = Field("active", description="active | completed | upcoming")
 
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class ScreenTimeLog(BaseModel):
+    user_id: str = Field(..., description="User id")
+    challenge_id: str = Field(..., description="Challenge id")
+    date: DateType = Field(..., description="Date of the log (YYYY-MM-DD)")
+    minutes: int = Field(..., ge=0, le=24*60, description="Screen time in minutes for the date")
